@@ -3,11 +3,13 @@ import shutil
 import logging
 from app.url_to_name import url_to_name
 from app.folder_structure import PAGES_DIR, SKILLS_DIR, CLEAN_DIR
-from app.index import load_index, save_index
+# from app.index import load_index, save_index
 from app.logging_util import log_success
 
 
 def delete_site(url: str):
+    # TODO: update this to use folder_structure, visited, and queue
+    return 
     """Delete all traces of a crawled site from index, pages, clean, and skills."""
     base_name = url_to_name(url)
 

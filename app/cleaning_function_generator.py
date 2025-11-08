@@ -1,12 +1,13 @@
 import logging
 import traceback
 from anthropic import Anthropic
+from app.anthropic import MAX_OUTPUT_TOKENS
 from app.markdown_llm import get_anthropic_client, MODEL, PRICING
 
 
 def build_generation_prompt(sampled_content: str) -> str:
-    """Build the prompt for generating cleaning functions."""
-    return f"""You are a Python code generator. Based on the following samples from documentation markdown files, create TWO Python functions to clean the content:
+    return f"""
+You are a Python code generator. Based on the following samples from documentation markdown files, create TWO Python functions to clean the content:
 
 1. **clean_line(line: str) -> str**
    - Takes a single line of markdown text
@@ -110,7 +111,6 @@ def estimate_page_cleaning_cost(sampled_content: str, max_retries: int = 5) -> d
 
 
 def build_fix_prompt(sampled_content: str, error_context: dict) -> str:
-    """Build the prompt for fixing a broken cleaning function."""
     return f"""The Python cleaning functions you generated have an error. Please fix the code.
 
 **ORIGINAL CODE THAT FAILED:**
@@ -139,40 +139,28 @@ def build_fix_prompt(sampled_content: str, error_context: dict) -> str:
 **YOUR CORRECTED CODE:**"""
 
 
-def generate_cleaning_functions(sampled_content: str, max_retries: int = 5) -> str:
-    """
-    Generate Python cleaning functions using Claude API with iterative retry.
-
-    Args:
-        sampled_content: Sampled markdown content to inform function generation
-        max_retries: Maximum number of attempts to generate valid functions
-
-    Returns:
-        Valid Python code as a string defining clean_line() and clean_doc()
-
-    Raises:
-        Exception: If unable to generate valid functions after max_retries
-    """
+def generate_cleaning_functions(sampled_content: str, max_iterations: int = 5) -> str:
     client = get_anthropic_client()
     attempt = 0
     error_context = None
+    code = None
 
-    logging.info(f"  → Generating cleaning functions with Claude API (max {max_retries} attempts)...")
+    logging.info(f"  → Generating cleaning functions with Claude API (max {max_iterations} attempts)...")
 
-    while attempt < max_retries:
+    while attempt < max_iterations:
         try:
             # Generate or fix the code
             if attempt == 0:
                 prompt = build_generation_prompt(sampled_content)
-                logging.info(f"  → Attempt {attempt + 1}/{max_retries}: Generating functions...")
+                logging.info(f"  → Attempt {attempt + 1}/{max_iterations}: Generating functions...")
             else:
                 prompt = build_fix_prompt(sampled_content, error_context)
-                logging.info(f"  → Attempt {attempt + 1}/{max_retries}: Fixing errors...")
+                logging.info(f"  → Attempt {attempt + 1}/{max_iterations}: Fixing errors...")
 
             # Call Claude API
             message = client.messages.create(
                 model=MODEL,
-                max_tokens=4000,
+                max_tokens=MAX_OUTPUT_TOKEN,
                 messages=[{"role": "user", "content": prompt}]
             )
 
@@ -232,14 +220,18 @@ def generate_cleaning_functions(sampled_content: str, max_retries: int = 5) -> s
                 "attempt": attempt + 1
             }
 
-            logging.warning(f"  ⚠ Validation failed on attempt {attempt + 1}/{max_retries}")
+            logging.warning(f"  ⚠ Validation failed on attempt {attempt + 1}/{max_iterations}")
             logging.warning(f"     Error: {str(e)}")
 
             attempt += 1
 
-    # Max retries exhausted
-    raise Exception(
-        f"Failed to generate valid cleaning functions after {max_retries} attempts.\n"
-        f"Last error: {error_context['error']}\n"
-        f"Last code:\n{error_context['code']}"
-    )
+
+    if not code: 
+        # Max retries exhausted
+        raise Exception(
+            f"Failed to generate valid cleaning functions after {max_iterations} attempts.\n"
+            # f"Last error: {error_context['error']}\n"
+            # f"Last code:\n{error_context['code']}"
+        )
+
+    return code

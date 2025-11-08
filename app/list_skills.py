@@ -2,11 +2,12 @@ import os
 import logging
 from datetime import datetime
 from app.folder_structure import SKILLS_DIR
-from app.index import load_index
 from app.logging_util import log_centered_header
 
 
 def list_skills():
+     # TODO: update this to use folder_structure, visited, and queue
+    return
     """List all crawled skills with statistics."""
     index = load_index()
 

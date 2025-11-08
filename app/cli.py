@@ -1,5 +1,5 @@
 import argparse
-from app import main as run_main
+from app.crawl import crawl 
 from app.list_skills import list_skills
 from app.delete_skill import delete_site
 
@@ -22,21 +22,12 @@ def create_parser():
         type=str,
         help="Documentation URL to crawl and save"
     )
-    # crawl_parser.add_argument(
-    #     "--clean-with-llm",
-    #     action="store_true",
-    #     help="Use Claude API to remove duplicates and artifacts from concatenated markdown"
-    # )
-    # crawl_parser.add_argument(
-    #     "--use-batch",
-    #     action="store_true",
-    #     help="Use Claude batch processing API for 50%% cost savings (requires --clean-with-llm)"
-    # )
-    # crawl_parser.add_argument(
-    #     "--clean-pages",
-    #     action="store_true",
-    #     help="Apply intermediate page-level cleaning with LLM-generated functions before concatenation"
-    # )
+
+    crawl_parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Apply intermediate page-level cleaning with LLM-generated functions before concatenation"
+    )
 
     # LIST command
     list_parser = subparsers.add_parser(
@@ -73,11 +64,9 @@ def main():
     elif args.command == "delete":
         delete_site(args.url)
     elif args.command == "crawl":
-        run_main(
+        crawl(
             args.url,
-            use_llm_cleaning=args.clean_with_llm,
-            use_batch=args.use_batch,
-            use_page_cleaning=args.clean_pages
+            clean=args.clean,
         )
 
 

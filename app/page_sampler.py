@@ -1,25 +1,16 @@
 import os
+import app.folder_structure as folder_structure
 import random
 import logging
 from typing import List
 
+max_tokens = 200_000
 
-def sample_pages_for_analysis(page_paths: List[str], sample_percentage: float = 0.05) -> str:
-    """
-    Sample markdown pages with proportional allocation based on total content length.
+def sample_pages_for_analysis(page_dir, target_tokens = 50_000) -> str:
 
-    For each page, extracts head/tail/middle samples proportional to the page's size
-    relative to the total corpus size. This ensures representative sampling across
-    all pages while maintaining a target sample percentage of the total content.
+    page_paths = folder_structure.get_all_pages(page_dir)
 
-    Args:
-        page_paths: List of absolute paths to markdown files
-        sample_percentage: Percentage of total content to sample (default 5%)
-
-    Returns:
-        Concatenated string of all samples with clear page separators
-    """
-    logging.info(f"  → Sampling {len(page_paths)} page(s) at {sample_percentage*100:.1f}% rate...")
+    page_paths: List[str]
 
     # Step 1: Read all pages and calculate total length
     page_contents = []
@@ -42,6 +33,13 @@ def sample_pages_for_analysis(page_paths: List[str], sample_percentage: float = 
     if total_chars == 0:
         logging.warning("  ⚠ No content found in pages")
         return ""
+
+    # 1_token = 4_chars
+    # 4_token = 16_chars
+    token_goal = min(max_tokens, total_chars // 4, target_tokens)
+    sample_percentage = token_goal / total_chars
+
+    logging.info(f"  → Sampling {len(page_paths)} page(s) at {sample_percentage*100:.1f}% rate...")
 
     # Step 2: Calculate target sample size
     target_sample_chars = int(total_chars * sample_percentage)
