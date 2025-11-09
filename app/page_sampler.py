@@ -6,7 +6,7 @@ from typing import List
 
 max_tokens = 200_000
 
-def sample_pages_for_analysis(page_dir, target_tokens = 50_000) -> str:
+def sample_pages_for_analysis(page_dir, target_tokens = 100_000) -> str:
 
     page_paths = folder_structure.get_all_pages(page_dir)
 
