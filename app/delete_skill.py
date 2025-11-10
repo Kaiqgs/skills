@@ -4,6 +4,7 @@ import logging
 from app.url_to_name import url_to_name
 from app.folder_structure import PAGES_DIR, SKILLS_DIR, CLEAN_DIR, ITERATIONS_DIR, get_iterations_dir
 from app.logging_util import log_success
+from app.marketplace_manager import remove_skill_from_marketplace
 
 
 def delete_site(url: str):
@@ -57,5 +58,7 @@ def delete_site(url: str):
     if os.path.exists(skill_dir):
         shutil.rmtree(skill_dir)
         log_success(f"Deleted skill directory: {skill_dir}")
+
+    remove_skill_from_marketplace(base_name)
 
     logging.info("\nDeletion complete!")

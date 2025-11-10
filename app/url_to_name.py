@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 
 
 def url_to_name(url: str) -> str:
-    """Convert a URL to a filesystem-safe name."""
+    """Convert a URL to a filesystem-safe name using hyphen-case."""
     parsed = urlparse(url)
 
     # Combine domain and path
@@ -11,15 +11,18 @@ def url_to_name(url: str) -> str:
     if parsed.path and parsed.path != '/':
         name_parts.append(parsed.path.strip('/'))
 
-    name = '_'.join(name_parts)
+    name = '-'.join(name_parts)
 
-    # Replace any non-alphanumeric characters (except underscore and hyphen) with underscore
-    name = re.sub(r'[^a-zA-Z0-9_-]', '_', name)
+    # Replace any non-alphanumeric characters (except hyphen) with hyphen
+    name = re.sub(r'[^a-zA-Z0-9-]', '-', name)
 
-    # Remove consecutive underscores
-    name = re.sub(r'_+', '_', name)
+    # Convert to lowercase for consistency
+    name = name.lower()
 
-    # Remove leading/trailing underscores
-    name = name.strip('_')
+    # Remove consecutive hyphens
+    name = re.sub(r'-+', '-', name)
+
+    # Remove leading/trailing hyphens
+    name = name.strip('-')
 
     return name

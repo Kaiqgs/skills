@@ -2,6 +2,7 @@ from collections import deque
 import os
 import time
 import logging
+import app.anthropic as app_anthropic
 from typing import  Set, List 
 from urllib.parse import urlparse, urlunparse
 from selenium.webdriver import Chrome
@@ -17,6 +18,8 @@ from app.page_sampler import sample_pages_for_analysis
 from app.cleaning_function_generator import generate_cleaning_functions, estimate_page_cleaning_cost
 from app.page_cleaner import apply_cleaning_functions, get_cleaned_page_paths
 from app.logging_util import log_header, log_success, log_info, log_warning
+from app.marketplace_manager import add_skill_to_marketplace
+from app.skill_validator import validate_skill
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(message)s')
@@ -181,7 +184,7 @@ def generate_skill_md(skill_name: str, reference_files: List[str], page_director
     )
 
     estimated_input_tokens = token_count.input_tokens
-    estimated_output_tokens = 4000
+    estimated_output_tokens = app_anthropic.MAX_OUTPUT_TOKENS
 
     input_cost = (estimated_input_tokens / 1_000_000) * 3.00
     output_cost = (estimated_output_tokens / 1_000_000) * 15.00
@@ -191,7 +194,7 @@ def generate_skill_md(skill_name: str, reference_files: List[str], page_director
 
     message = client.messages.create(
         model=MODEL,
-        max_tokens=8000,
+        max_tokens=app_anthropic.MAX_OUTPUT_TOKENS,
         messages=[
             {"role": "user", "content": prompt}
         ]
@@ -319,6 +322,14 @@ def crawl(url: str = "https://www.google.com", clean=False):
     log_success(f"Skill created at: {skill_file}")
     log_info(f"References: {len(reference_files)} files in {references_dir}")
     log_info(f"Total tokens: {usage['input_tokens']:,} input + {usage['output_tokens']:,} output = ${usage['total_cost']:.4f}")
+
+    is_valid, validation_message = validate_skill(skill_file)
+    if is_valid:
+        log_success(f"Validation passed: {validation_message}")
+    else:
+        log_warning(f"Validation failed: {validation_message}")
+
+    add_skill_to_marketplace(base_name)
 
 
 

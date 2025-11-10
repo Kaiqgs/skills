@@ -15,7 +15,10 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/gorm_io_docs"
+        "./skills/echo-labstack-com-docs",
+        "./skills/gorm-io-docs",
+        "./skills/htmx-org-docs",
+        "./skills/hyperscript-org-docs"
       ]
     }
   ]
